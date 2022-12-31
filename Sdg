@@ -1,0 +1,82 @@
+import requests
+from bs4 import BeautifulSoup
+
+res=requests.get("https://www.infocession.fr/investisseurs")
+cres=BeautifulSoup(res.text,'html.parser')
+b=cres.find_all('div', class_="col-xs-3")
+Nom=[]
+for i in b:
+    for k in i:
+        var=k.a.text
+        Nom.append(var)
+Urls=[]
+for i in b:
+    for k in i:
+        var=k.a['href']
+        Urls.append("https://www.infocession.fr" + var)
+        Creation=[]
+Collaborateurs=[]
+Investissements=[]
+TaillesCible=[]
+Description=[]
+CapInnov=[]
+CapDev=[]
+CapTrans=[]
+for i in Urls:
+    r=requests.get(i)
+    cres=BeautifulSoup(r.text,'html.parser')
+    y=cres.find_all('div',class_="value")
+    cre=y[0].text
+    Creation.append(cre)
+    g=y[1].text
+    g=g.replace("collaborateurs","")
+    g=g.replace("collaborateur","")
+    g=int(g)
+    Collaborateurs.append(g)
+    inv=y[2].text
+    inv=inv.replace("investissements","") 
+    inv=inv.replace("investissement","")
+    Investissements.append(inv)
+    t=cres.find_all("div",class_="tag")
+    x=t[0].text +" to "+t[1].text
+    TaillesCible.append(x)
+    o=cres.find("div", class_='description')
+    desc=o.p.text
+    Description.append(desc)
+    p=cres.find_all("div",class_="gauge")
+    if p[0]["class"][1]=="no":
+        j="Non"
+    else:
+        j="Oui"
+    CapInnov.append(j)
+    if p[1]["class"][1]=="no":
+        jo="Non"
+    else:
+        jo="Oui"
+    CapDev.append(jo)
+    if p[2]["class"][1]=="no":
+       joj="Non"
+    else:
+       joj="Oui"
+    CapTrans.append(joj)
+
+for i in range(len(Investissements)):
+    if Investissements[i].startswith("min"):
+        Investissements[i]="NaN"
+
+import pandas as pd
+data=pd.DataFrame({
+    "Name":Nom,
+    "DateCreation":Creation,
+    "NbCollaborateurs":Collaborateurs,
+    "Investissements":Investissements,
+    "TaillesCible":TaillesCible,
+    "Description":Description,
+    "Capital Innovation":CapInnov,
+    "Capital Développement":CapDev,
+    "Capital Transmission":CapTrans
+
+})
+file_name="SDGs_Sheet.xlsx"
+
+data.to_excel(file_name)
